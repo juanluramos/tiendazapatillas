@@ -1,0 +1,10 @@
+<?php require_once "../includes/conexion.php"; ?>
+
+<h2>Iniciar sesión 🔑</h2>
+
+<form action="procesar_login.php" method="POST">
+    <input type="email" name="email" placeholder="Email" required><br>
+    <input type="password" name="password" placeholder="Contraseña" required><br>
+
+    <button type="submit">Entrar</button>
+</form>
