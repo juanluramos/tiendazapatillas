@@ -2,73 +2,94 @@
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
-session_start();
+require_once "../includes/usuario_guard.php";
 require_once "../includes/conexion.php";
-
-if (!isset($_SESSION['usuario_id'])) {
-    die("Debes iniciar sesión primero");
-}
 
 $usuario_id = $_SESSION['usuario_id'];
 
 $sql = "
-SELECT 
-    c.id,
-    c.talla,
-    c.cantidad,
-    p.nombre,
-    p.precio
+SELECT c.id,
+       c.talla,
+       c.cantidad,
+       p.nombre,
+       p.precio
 FROM carrito c
-JOIN productos p 
-    ON p.id = c.id_producto
+JOIN productos p ON p.id = c.id_producto
 WHERE c.id_usuario = ?
 ";
 
 $q = $conexion->prepare($sql);
 $q->bind_param("i", $usuario_id);
 $q->execute();
-
 $res = $q->get_result();
 ?>
+<!DOCTYPE html>
+<html lang="es">
 
-<h2>Tu carrito 🛒</h2>
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
 
-<table border="1" cellpadding="8">
-<tr>
-    <th>Producto</th>
-    <th>Talla</th>
-    <th>Cantidad</th>
-    <th>Precio</th>
-    <th>Total</th>
-</tr>
+<body>
 
-<?php
-$total = 0;
+    <?php require_once "../includes/header.php"; ?>
 
-while ($item = $res->fetch_assoc()):
-    $linea = $item['cantidad'] * $item['precio'];
-    $total += $linea;
-?>
+    <div class="container">
+        <h2>Tu carrito 🛒</h2>
 
+        <?php if ($res->num_rows === 0): ?>
+            <p>Tu carrito está vacío.</p>
+            <a class="btn" href="productos.php">Ver productos</a>
+        <?php else: ?>
 
-<tr>
-    <td><?php echo $item['nombre']; ?></td>
-    <td><?php echo $item['talla']; ?></td>
-    <td><?php echo $item['cantidad']; ?></td>
-    <td><?php echo number_format($item['precio'], 2); ?> €</td>
-    <td><?php echo number_format($linea, 2); ?> €</td>
-<th>Acción</th>
-    <td>
-        <a href="carrito_eliminar.php?id=<?php echo $item['id']; ?>">
-            ❌ Eliminar
-        </a>
-    </td>
-</tr>
+            <table class="cart-table">
+                <tr>
+                    <th>Producto</th>
+                    <th>Talla</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                    <th>Total</th>
+                    <th></th>
+                </tr>
 
-<?php endwhile; ?>
+                <?php
+                $total = 0;
+                while ($item = $res->fetch_assoc()):
+                    $linea = $item['cantidad'] * $item['precio'];
+                    $total += $linea;
+                ?>
+                    <tr>
+                        <td><?= htmlspecialchars($item['nombre']) ?></td>
+                        <td><?= htmlspecialchars($item['talla']) ?></td>
+                        <td><?= (int)$item['cantidad'] ?></td>
+                        <td><?= number_format((float)$item['precio'], 2) ?> €</td>
+                        <td><?= number_format($linea, 2) ?> €</td>
+                        <td>
+                            <a class="btn btn-danger"
+                                href="/tiendazapatillas/pages/carrito_eliminar.php?id=<?= (int)$item['id'] ?>"
+                                onclick="return confirm('¿Eliminar este producto?');">
+                                ✖
+                            </a>
 
-</table>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+            </table>
 
-<h3>Total: <?php echo number_format($total, 2); ?> €</h3>
+            <div class="cart-total">
+                <strong>Total: <?= number_format($total, 2) ?> €</strong>
+            </div>
 
-<a href="productos.php">Seguir comprando</a>
+            <div class="cart-actions">
+                <a class="btn btn-secondary" href="productos.php">Seguir comprando</a>
+                <a class="btn" href="finalizar_compra.php">Finalizar compra</a>
+            </div>
+
+        <?php endif; ?>
+    </div>
+
+</body>
+
+</html>

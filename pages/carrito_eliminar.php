@@ -2,12 +2,9 @@
 error_reporting(E_ALL);
 ini_set("display_errors", 1);
 
-session_start();
+require_once "../includes/usuario_guard.php";
 require_once "../includes/conexion.php";
 
-if (!isset($_SESSION['usuario_id'])) {
-    die("No puedes borrar sin iniciar sesión");
-}
 
 $id_usuario = $_SESSION['usuario_id'];
 $id_carrito = $_GET['id'] ?? null;
